@@ -8,49 +8,29 @@ interface CarouselProps {
 const Carousel: React.FC<CarouselProps> = ({ images }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemWidth, setItemWidth] = useState(130);
-  const [marginRight] = useState(10);
   const [step, setStep] = useState(3);
   const [frameSize, setFrameSize] = useState(3);
 
+  const marginRight = 10;
+
+  const maxIndex = Math.max(0, images.length - frameSize);
   const offset = currentIndex * (itemWidth + marginRight);
 
-  function handlePrev() {
-    if (currentIndex > 0) {
-      setCurrentIndex(Math.max(currentIndex - step, 0));
-    }
-  }
+  const handlePrev = () => {
+    setCurrentIndex(prev => Math.max(prev - step, 0));
+  };
 
-  function handleNext() {
-    if (currentIndex < images.length - frameSize) {
-      setCurrentIndex(Math.min(currentIndex + step, images.length - frameSize));
-    }
-  }
+  const handleNext = () => {
+    setCurrentIndex(prev => Math.min(prev + step, maxIndex));
+  };
 
-  function onChangeStep(e: React.ChangeEvent<HTMLInputElement>) {
-    const val = Number(e.target.value);
-
-    if (val > 0) {
-      setStep(val);
-    }
-  }
-
-  function onChangeItemWidth(e: React.ChangeEvent<HTMLInputElement>) {
-    const val = Number(e.target.value);
-
-    if (val > 0) {
-      setItemWidth(val);
-    }
-  }
-
-  function onChangeFrameSize(e: React.ChangeEvent<HTMLInputElement>) {
-    const val = Number(e.target.value);
-
-    if (val > 0 && val <= images.length) {
-      setFrameSize(val);
-    }
-
-    setCurrentIndex(0);
-  }
+  const onChangeNumber =
+    (setter: React.Dispatch<React.SetStateAction<number>>) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = Math.max(1, Number(e.target.value));
+      setter(value);
+      setCurrentIndex(0);
+    };
 
   return (
     <>
@@ -61,7 +41,7 @@ const Carousel: React.FC<CarouselProps> = ({ images }) => {
         id="itemId"
         type="number"
         value={itemWidth}
-        onChange={onChangeItemWidth}
+        onChange={onChangeNumber(setItemWidth)}
       />
 
       <label htmlFor="frameId">Frame size</label>
@@ -69,17 +49,21 @@ const Carousel: React.FC<CarouselProps> = ({ images }) => {
         id="frameId"
         type="number"
         value={frameSize}
-        onChange={onChangeFrameSize}
+        onChange={onChangeNumber(setFrameSize)}
       />
 
       <label htmlFor="stepId">Step</label>
-      <input id="stepId" type="number" value={step} onChange={onChangeStep} />
+      <input
+        id="stepId"
+        type="number"
+        value={step}
+        onChange={onChangeNumber(setStep)}
+      />
 
       <div
         className="Carousel__wrapper"
         style={{
           width: frameSize * (itemWidth + marginRight) - marginRight,
-          overflow: 'hidden',
         }}
       >
         <ul
@@ -90,19 +74,26 @@ const Carousel: React.FC<CarouselProps> = ({ images }) => {
           }}
         >
           {images.map((src, index) => (
-            <li key={src} style={{ width: itemWidth, marginRight }}>
+            <li
+              key={src}
+              className="Carousel__item"
+              style={{
+                width: itemWidth,
+                marginRight: index === images.length - 1 ? 0 : marginRight,
+              }}
+            >
               <img
                 src={src}
                 alt={`Image ${index + 1}`}
                 width={itemWidth}
-                height={itemWidth}
+                height={130}
               />
             </li>
           ))}
         </ul>
       </div>
 
-      <div className="Carousel__buttons">
+      <div className="Carousel__controls">
         <button
           type="button"
           data-cy="prev"
@@ -115,7 +106,7 @@ const Carousel: React.FC<CarouselProps> = ({ images }) => {
           type="button"
           data-cy="next"
           onClick={handleNext}
-          disabled={currentIndex >= images.length - frameSize}
+          disabled={currentIndex >= maxIndex}
         >
           Next
         </button>
